@@ -1,0 +1,2 @@
+obj-$(CONFIG_SPI_FT232H_USB)		+= spi-ft232h.o
+
