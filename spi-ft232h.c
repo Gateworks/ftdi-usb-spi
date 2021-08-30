@@ -1352,6 +1352,7 @@ static struct usb_device_id ft232h_intf_table[] = {
 #ifndef CONFIG_USB_SERIAL_FTDI_SIO
 	{ USB_DEVICE(0x0403, 0x6014), .driver_info = (kernel_ulong_t)&ft232h_spi_cfg_intf_info },
 #endif
+	{ USB_DEVICE(0x2beb, 0x0146), .driver_info = (kernel_ulong_t)&ft232h_spi_cfg_intf_info },
 	{}
 };
 MODULE_DEVICE_TABLE(usb, ft232h_intf_table);
