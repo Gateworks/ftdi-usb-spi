@@ -9,3 +9,6 @@ all: modules
 modules:
 	$(MAKE) -C $(KDIR) M=$$PWD modules $(KBUILD_OPTIONS)
 
+modules_install:
+	$(MAKE) -C $(KDIR) M=$$PWD modules_install
+
