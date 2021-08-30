@@ -23,10 +23,6 @@
 #include <linux/of.h>
 #include "ft232h-intf.h"
 
-int spi_bus_number = -1;
-module_param(spi_bus_number, int, S_IRUSR | S_IWUSR);
-MODULE_PARM_DESC(spi_bus_number, "SPI controller bus number");
-
 int usb_wait_msec = 0;
 module_param(usb_wait_msec, int, S_IRUSR | S_IWUSR);
 MODULE_PARM_DESC(usb_wait_msec, "Wait after USB transfer in msec");
@@ -506,26 +502,11 @@ static int ftdi_spi_probe(struct platform_device *pdev)
 	struct spi_controller *master;
 	struct ftdi_spi *priv;
 	int ret;
-	int bus_no = -1;
 
 	pd = dev->platform_data;
 	if (!pd) {
 		dev_err(dev, "Missing platform data.\n");
 		return -EINVAL;
-	}
-
-	if (spi_bus_number >= 0) {
-		bus_no = spi_bus_number;
-	}
-	else {
-		struct device_node *of_node =
-			of_find_compatible_node(NULL, NULL, SPI_INTF_DEVNAME);
-		if (of_node != NULL) {
-			bus_no = of_alias_get_id(of_node, "spi");
-			if (bus_no < 0) {
-				bus_no = -1;
-			}
-		}
 	}
 
 	if (!pd->ops ||
@@ -553,7 +534,7 @@ static int ftdi_spi_probe(struct platform_device *pdev)
 	priv->intf = to_usb_interface(dev->parent);
 	priv->iops = pd->ops;
 
-	master->bus_num = bus_no;
+	master->bus_num = -1;
 	master->mode_bits = SPI_CPOL | SPI_CPHA | SPI_LOOP |
 			    SPI_CS_HIGH | SPI_LSB_FIRST;
 	master->num_chipselect = 1;
