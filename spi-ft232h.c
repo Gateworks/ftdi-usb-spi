@@ -1348,12 +1348,10 @@ static void ft232h_intf_disconnect(struct usb_interface *intf)
 /*
  * USB device information
  */
-#define FTDI_VID			0x0403
-#define ARRI_SPI_INTF_PRODUCT_ID	0x6014
-
 static struct usb_device_id ft232h_intf_table[] = {
-	{ USB_DEVICE(FTDI_VID, ARRI_SPI_INTF_PRODUCT_ID),
-		.driver_info = (kernel_ulong_t)&ft232h_spi_cfg_intf_info },
+#ifndef CONFIG_USB_SERIAL_FTDI_SIO
+	{ USB_DEVICE(0x0403, 0x6014), .driver_info = (kernel_ulong_t)&ft232h_spi_cfg_intf_info },
+#endif
 	{}
 };
 MODULE_DEVICE_TABLE(usb, ft232h_intf_table);
