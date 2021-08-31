@@ -924,9 +924,7 @@ static int ftdi_mpsse_get_port_pins(struct ft232h_intf_priv *priv, bool low)
 
 static int ftdi_mpsse_set_port_pins(struct ft232h_intf_priv *priv, bool low)
 {
-#ifdef CONFIG_DYNAMIC_DEBUG
 	struct device *dev = &priv->intf->dev;
-#endif
 	int ret;
 
 	if (low) {
