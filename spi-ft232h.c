@@ -710,6 +710,7 @@ static int ftdi_set_clock(struct usb_interface *intf, int clock_freq_hz)
 	case 0x6010: /* FT2232 */
 	case 0x6011: /* FT4232 */
 	case 0x6014: /* FT232H */
+	case 0x0146: /* GW16146 */
 		desc.len = 1;
 		if (clock_freq_hz <= (FTDI_CLK_30MHZ/65535)) {
 			buf[0] = EN_DIV_5;
