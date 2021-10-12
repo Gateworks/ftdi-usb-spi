@@ -200,10 +200,11 @@ static int ftdi_spi_tx_rx(struct ftdi_spi *priv, struct spi_device *spi,
 		priv->xfer_buf[1] = stride - 1;
 		priv->xfer_buf[2] = (stride - 1) >> 8;
 		memcpy(&priv->xfer_buf[3], tx_offs, stride);
+		priv->xfer_buf[3 + stride] = SEND_IMMEDIATE;
 		print_hex_dump_debug("WR: ", DUMP_PREFIX_OFFSET, 16, 1,
 				     priv->xfer_buf, stride + 3, 1);
 
-		ret = ops->write_data(priv->intf, priv->xfer_buf, stride + 3);
+		ret = ops->write_data(priv->intf, priv->xfer_buf, stride + 4);
 		if (ret < 0) {
 			dev_err(dev, "%s: xfer failed %d\n", __func__, ret);
 			goto fail;
@@ -320,10 +321,10 @@ static int ftdi_spi_rx(struct ftdi_spi *priv, struct spi_transfer *xfer)
 	priv->xfer_buf[0] = priv->rx_cmd;
 	priv->xfer_buf[1] = xfer->len - 1;
 	priv->xfer_buf[2] = (xfer->len - 1) >> 8;
-
+	priv->xfer_buf[3] = SEND_IMMEDIATE;
 	ops->lock(priv->intf);
 
-	ret = ops->write_data(priv->intf, priv->xfer_buf, 3);
+	ret = ops->write_data(priv->intf, priv->xfer_buf, 4);
 	if (ret < 0)
 		goto err;
 

@@ -38,6 +38,7 @@
 #define LOOPBACK_ON		0x84
 #define LOOPBACK_OFF		0x85
 #define TCK_DIVISOR		0x86
+#define SEND_IMMEDIATE		0x87
 #define DIS_DIV_5		0x8A
 #define EN_DIV_5		0x8B
 #define EN_3_PHASE		0x8C
