@@ -1305,6 +1305,10 @@ static int ft232h_intf_probe(struct usb_interface *intf,
 
 	priv->udev = usb_get_dev(interface_to_usbdev(intf));
 
+	/* reset the FTDI device */
+	usb_control_msg(priv->udev, usb_sndctrlpipe(priv->udev, 0),
+		0, 0x40, 0, priv->index, NULL, 0, 5000);
+
 	priv->id = ida_simple_get(&ftdi_devid_ida, 0, 0, GFP_KERNEL);
 	if (priv->id < 0)
 		return priv->id;
