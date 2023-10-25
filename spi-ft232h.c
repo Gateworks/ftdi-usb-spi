@@ -1313,6 +1313,20 @@ static int ft232h_intf_probe(struct usb_interface *intf,
 	if (priv->id < 0)
 		return priv->id;
 
+	/* GW16146 has FT232H with its pin 29 (GPIOH5, gpio offset 10)
+	 * connected to an NRC7292 RST
+	 */
+	if (id->idVendor == 0x2beb && id->idProduct == 0x0146) {
+		dev_info(dev, "GW16146 asserting NRC RST\n");
+		ret = ftdi_gpio_direction_output(intf, 10, 1);
+		if (ret < 0)
+			goto err;
+		mdelay(100);
+		ret = ftdi_gpio_direction_output(intf, 10, 0);
+		if (ret < 0)
+			goto err;
+	}
+
 	if (info->probe) {
 		ret = info->probe(intf, info->plat_data);
 		if (ret < 0)
