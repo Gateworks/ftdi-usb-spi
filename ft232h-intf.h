@@ -133,6 +133,11 @@ struct ft232h_intf_ops {
  */
 struct mpsse_spi_platform_data {
 	const struct ft232h_intf_ops *ops;
+	struct spi_board_info *info;
+	int reset_gpio;
+	bool reset_active_high;
+	u32 reset_assert_ms;
+	u32 reset_deassert_ms;
 };
 
 /*

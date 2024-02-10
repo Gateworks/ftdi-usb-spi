@@ -29,6 +29,9 @@ MODULE_PARM_DESC(usb_wait_msec, "Wait after USB transfer in msec");
 
 #define SPI_INTF_DEVNAME	"spi-ft232h"
 
+int ftdi_gpio_direction_output(struct usb_interface *intf, unsigned int offset, int value);
+int ftdi_gpio_direction_input(struct usb_interface *intf, unsigned int offset);
+
 /* SPI controller/master Compatibility Layer */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 13, 0)
 #define spi_controller spi_master
@@ -571,6 +574,27 @@ static int ftdi_spi_probe(struct platform_device *pdev)
 	if (ret < 0) {
 		dev_err(&pdev->dev, "Set latency failed\n");
 		goto err;
+	}
+
+	/* GPIO reset */
+	if (pd->reset_gpio != -1) {
+		dev_info(dev, "asserting reset GPIO%d\n", pd->reset_gpio);
+		ret = ftdi_gpio_direction_output(priv->intf, pd->reset_gpio,
+						 pd->reset_active_high ? 1 : 0);
+		if (ret < 0)
+			goto err;
+		mdelay(pd->reset_assert_ms);
+		ret = ftdi_gpio_direction_output(priv->intf, pd->reset_gpio,
+						 pd->reset_active_high ? 0 : 1);
+		if (ret < 0)
+			goto err;
+		mdelay(pd->reset_deassert_ms);
+	}
+
+	/* register SPI device depending on config */
+	if (pd->info && !spi_new_device(master, pd->info)) {
+		dev_err(&pdev->dev, "failed to add SPI device for %s on %s\n",
+			pd->info->modalias, dev_name(&master->dev));
 	}
 
 	return 0;
@@ -1182,6 +1206,26 @@ static const struct ft232h_intf_ops ft232h_intf_ops = {
 
 static const struct mpsse_spi_platform_data ft232h_spi_cfg_plat_data = {
 	.ops		= &ft232h_intf_ops,
+	.reset_gpio	= -1,
+};
+
+/* GW16146 is an FT232H USB to SPI controller connected to an NRC7292 802.11ah radio */
+static struct spi_board_info gw16146_board_info = {
+	.modalias	= "nrc80211",
+	.max_speed_hz	= 30000000,
+	.chip_select	= 0,
+	.mode		= SPI_MODE_0,
+	.irq		= -1,
+};
+
+static const struct mpsse_spi_platform_data gw16146_spi_cfg_plat_data = {
+	.ops		= &ft232h_intf_ops,
+	.info		= &gw16146_board_info,
+	/* active-high reset on pin 29 (GPIOH5, gpio offset 10) */
+	.reset_gpio	= 10,
+	.reset_active_high = 1,
+	.reset_assert_ms = 100,
+	.reset_deassert_ms = 0,
 };
 
 static struct platform_device *mpsse_dev_register(struct ft232h_intf_priv *priv,
@@ -1255,6 +1299,12 @@ static const struct ft232h_intf_info ft232h_spi_cfg_intf_info = {
 	.plat_data  = &ft232h_spi_cfg_plat_data,
 };
 
+static const struct ft232h_intf_info gw16146_spi_cfg_intf_info = {
+	.probe  = ft232h_intf_spi_probe,
+	.remove  = ft232h_intf_spi_remove,
+	.plat_data  = &gw16146_spi_cfg_plat_data,
+};
+
 static int ft232h_intf_probe(struct usb_interface *intf,
 			     const struct usb_device_id *id)
 {
@@ -1313,20 +1363,6 @@ static int ft232h_intf_probe(struct usb_interface *intf,
 	if (priv->id < 0)
 		return priv->id;
 
-	/* GW16146 has FT232H with its pin 29 (GPIOH5, gpio offset 10)
-	 * connected to an NRC7292 RST
-	 */
-	if (id->idVendor == 0x2beb && id->idProduct == 0x0146) {
-		dev_info(dev, "GW16146 asserting NRC RST\n");
-		ret = ftdi_gpio_direction_output(intf, 10, 1);
-		if (ret < 0)
-			goto err;
-		mdelay(100);
-		ret = ftdi_gpio_direction_output(intf, 10, 0);
-		if (ret < 0)
-			goto err;
-	}
-
 	if (info->probe) {
 		ret = info->probe(intf, info->plat_data);
 		if (ret < 0)
@@ -1370,7 +1406,7 @@ static struct usb_device_id ft232h_intf_table[] = {
 #ifndef CONFIG_USB_SERIAL_FTDI_SIO
 	{ USB_DEVICE(0x0403, 0x6014), .driver_info = (kernel_ulong_t)&ft232h_spi_cfg_intf_info },
 #endif
-	{ USB_DEVICE(0x2beb, 0x0146), .driver_info = (kernel_ulong_t)&ft232h_spi_cfg_intf_info },
+	{ USB_DEVICE(0x2beb, 0x0146), .driver_info = (kernel_ulong_t)&gw16146_spi_cfg_intf_info },
 	{}
 };
 MODULE_DEVICE_TABLE(usb, ft232h_intf_table);
