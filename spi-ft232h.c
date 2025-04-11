@@ -123,8 +123,16 @@ static inline void spi_controller_put(struct spi_controller *ctlr)
 
 static void ftdi_spi_set_cs(struct spi_device *spi, bool enable)
 {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 9, 0)
 	struct ftdi_spi *priv = spi_controller_get_devdata(spi->master);
+#else
+	struct ftdi_spi *priv = spi_controller_get_devdata(spi->controller);
+#endif
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 8, 0)
         priv->iops->gpio_set(priv->intf, spi->chip_select, enable);
+#else
+        priv->iops->gpio_set(priv->intf, spi->chip_select[0], enable);
+#endif
 }
 
 static inline u8 ftdi_spi_txrx_byte_cmd(struct spi_device *spi)
@@ -1018,7 +1026,7 @@ static int ftdi_mpsse_cfg_bus_pins(struct usb_interface *intf,
 	return ret;
 }
 
-int ftdi_gpio_get(struct usb_interface *intf, unsigned int offset)
+static int ftdi_gpio_get(struct usb_interface *intf, unsigned int offset)
 {
 	struct ft232h_intf_priv *priv = usb_get_intfdata(intf);
 	struct device *dev = &priv->intf->dev;
@@ -1054,7 +1062,7 @@ int ftdi_gpio_get(struct usb_interface *intf, unsigned int offset)
 	return !!val;
 }
 
-void ftdi_gpio_set(struct usb_interface *intf, unsigned int offset, int value)
+static void ftdi_gpio_set(struct usb_interface *intf, unsigned int offset, int value)
 {
 	struct ft232h_intf_priv *priv = usb_get_intfdata(intf);
 	struct device *dev = &priv->intf->dev;
