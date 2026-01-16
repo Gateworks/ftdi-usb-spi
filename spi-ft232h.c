@@ -36,6 +36,13 @@ int ftdi_gpio_direction_input(struct usb_interface *intf, unsigned int offset);
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 13, 0)
 #define spi_controller spi_master
 #endif
+#if LINUX_VERSION_CODE > KERNEL_VERSION(6, 13, 0)
+#define spi_alloc_master spi_alloc_host
+#endif
+#if LINUX_VERSION_CODE > KERNEL_VERSION(6, 18, 0)
+#define ida_simple_remove ida_free
+#define ida_simple_get ida_alloc_range
+#endif
 
 /* Device info struct used for device specific init. */
 struct ft232h_intf_info {
